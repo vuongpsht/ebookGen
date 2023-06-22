@@ -32,7 +32,7 @@ async function chapterProcess(urls) {
         allChaps.push(chaps.filter(e => !!e))
         process.stdout.write('Downloading ' + Number(i / chapChunk.length * 100).toFixed(0) + '% complete... \r');
     }
-    return lodash.flattenDeep(allChaps)
+    return lodash.chunk(lodash.flattenDeep(allChaps), 1000)
 }
 
 async function getCover(url) {
@@ -65,16 +65,19 @@ async function getNovelInfo(url) {
         const tmpChapterArray = Array.from(Array(chapCounterID).keys())
         const chapterUrls = tmpChapterArray.map(e => `${url}/chuong-${e + 1}`)
         const content = await chapterProcess(chapterUrls)
-        const bookOptions = {
-            title: name,
-            author,
-            cover: 'imgTMPDir/cover.jpeg',
-            publisher: "Nothinginhere", // optional
-            content,
-            version: 3
-        }
-        const epubPath = `./${new Date().getTime()}${name}.epub`
-        new Epub(bookOptions, epubPath)
+        content.forEach((contentPart, contentIndex) => {
+            const _name = `${name}-num-${contentIndex + 1}`
+            const bookOptions = {
+                title: _name,
+                author,
+                cover: 'imgTMPDir/cover.jpeg',
+                publisher: "Nothinginhere", // optional
+                content: contentPart,
+                version: 3
+            }
+            const epubPath = `./${new Date().getTime()}${_name}.epub`
+            new Epub(bookOptions, epubPath)
+        })
     } catch (error) {
         console.log(error);
     }
