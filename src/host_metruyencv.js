@@ -5,24 +5,31 @@ const Epub = require("epub-gen");
 const Sharp = require('sharp')
 const fs = require('fs')
 async function getChapter(url) {
-    const source = await axios.get(url)
-    const html = source.data
-    const $ = cheerio.load(html)
-    $('div.pt-3').remove()
-    const article = $('#article')
-    const title = $('div.nh-read__title')
-    return {
-        title: title.text(),
-        data: `${article.html()}`.replaceAll('<br>', '<br />')
+    try {
+        const source = await axios.get(url)
+        const html = source.data
+        const $ = cheerio.load(html)
+        $('div.pt-3').remove()
+        const article = $('#article')
+        const title = $('div.nh-read__title')
+        return {
+            title: title.text(),
+            data: `${article.html()}`.replaceAll('<br>', '<br />')
+        }
+    
+    } catch (error) {
+        return null        
     }
 }
 async function chapterProcess(urls) {
     const chapChunk = lodash.chunk(urls, 100)
+    // const testChap = await getChapter(urls[0])
+    // return [testChap]
     const allChaps = []
     for (let i = 0; i < chapChunk.length; i++) {
         const promises = chapChunk[i].map(e => getChapter(e))
         const chaps = await Promise.all(promises)
-        allChaps.push(chaps)
+        allChaps.push(chaps.filter(e => !!e))
         process.stdout.write('Downloading ' + Number(i / chapChunk.length * 100).toFixed(0) + '% complete... \r');
     }
     return lodash.flattenDeep(allChaps)
@@ -64,7 +71,7 @@ async function getNovelInfo(url) {
             cover: 'imgTMPDir/cover.jpeg',
             publisher: "Nothinginhere", // optional
             content,
-            version: 2
+            version: 3
         }
         const epubPath = `./${new Date().getTime()}${name}.epub`
         new Epub(bookOptions, epubPath)
