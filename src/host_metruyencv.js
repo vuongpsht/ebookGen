@@ -16,9 +16,9 @@ async function getChapter(url) {
             title: title.text(),
             data: `${article.html()}`.replaceAll('<br>', '<br />')
         }
-    
+
     } catch (error) {
-        return null        
+        return null
     }
 }
 async function chapterProcess(urls) {
@@ -48,7 +48,12 @@ async function getCover(url) {
 
 async function getNovelInfo(url) {
     try {
+        console.log('call here');
         const source = await axios.get(url)
+        console.log('call here');
+
+        console.log('source', source);
+
         const html = source.data
         const $ = cheerio.load(html);
         const _name = $('h1.mr-2')
